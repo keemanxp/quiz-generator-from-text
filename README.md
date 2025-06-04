@@ -11,9 +11,6 @@ An interactive web-based tool that automatically generates quizzes from any text
 - Interactive quiz interface with instant scoring
 - Modern, responsive design
 
-## Demo
-
-[Live Demo](https://keemanxp.github.io/quiz-generator-from-text/)
 
 ## Screenshots
 ![Quiz Generator Interface](images/text-to-quiz-generator.png)
