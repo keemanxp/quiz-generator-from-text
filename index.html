@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Generator from Text</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        select, input[type="number"] {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .quiz-container {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .question-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .question-number {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .question-type {
+            color: #764ba2;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .question-text {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .option:hover {
+            background: #e8e8e8;
+            transform: translateX(5px);
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .option.selected {
+            background: #e3f2fd;
+            border-color: #667eea;
+        }
+
+        .option.correct {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .option.incorrect {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+
+        .true-false-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .tf-button {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            background: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .tf-button:hover {
+            background: #e8e8e8;
+        }
+
+        .tf-button.selected {
+            background: #e3f2fd;
+            border-color: #667eea;
+        }
+
+        .fill-blank-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        .submit-quiz {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            display: block;
+            margin: 30px auto 0;
+            padding: 15px 40px;
+            font-size: 1.1em;
+        }
+
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            display: none;
+        }
+
+        .score {
+            font-size: 3em;
+            color: #667eea;
+            margin: 20px 0;
+            font-weight: 700;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .feedback.good {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .feedback.medium {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .feedback.poor {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .retry-button {
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% {
+                content: '';
+            }
+            40% {
+                content: '.';
+            }
+            60% {
+                content: '..';
+            }
+            80%, 100% {
+                content: '...';
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Quiz Generator from Text</h1>
+        
+        <div class="input-section">
+            <label for="textInput">Enter your text content:</label>
+            <textarea id="textInput" placeholder="Paste your text here. The quiz generator will analyze it and create questions based on the key concepts, facts, and ideas found in the text..."></textarea>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="numQuestions">Number of Questions:</label>
+                <input type="number" id="numQuestions" min="1" max="50" value="5">
+            </div>
+            
+            <div class="control-group">
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="questionTypes">Question Types:</label>
+                <select id="questionTypes">
+                    <option value="all" selected>All Types</option>
+                    <option value="multiple">Multiple Choice Only</option>
+                    <option value="trueFalse">True/False Only</option>
+                    <option value="fillBlank">Fill in the Blank Only</option>
+                </select>
+            </div>
+        </div>
+
+        <button onclick="generateQuiz()" id="generateBtn">Generate Quiz</button>
+
+        <div id="loadingDiv" class="loading" style="display: none;">Generating quiz</div>
+
+        <div class="quiz-container" id="quizContainer"></div>
+
+        <div class="results" id="resultsContainer">
+            <h2>Quiz Results</h2>
+            <div class="score" id="scoreDisplay"></div>
+            <div class="feedback" id="feedbackDisplay"></div>
+            <button class="retry-button" onclick="retryQuiz()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuiz = [];
+        let userAnswers = {};
+
+        function extractKeyInformation(text) {
+            // Split text into sentences
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+            
+            // Extract key facts and concepts
+            const keyInfo = [];
+            
+            // Look for sentences with numbers, dates, definitions, comparisons
+            sentences.forEach(sentence => {
+                const trimmed = sentence.trim();
+                
+                // Check for various patterns that indicate important information
+                if (
+                    /\d+/.test(trimmed) || // Contains numbers
+                    /is |are |was |were |means |defined as/i.test(trimmed) || // Definitions
+                    /because|therefore|however|although/i.test(trimmed) || // Relationships
+                    /first|second|finally|important|significant|key/i.test(trimmed) || // Importance markers
+                    /[A-Z][a-z]+ [A-Z][a-z]+/.test(trimmed) // Proper nouns
+                ) {
+                    keyInfo.push(trimmed);
+                }
+            });
+            
+            return keyInfo.length > 0 ? keyInfo : sentences;
+        }
+
+        function generateMultipleChoice(fact, allFacts, difficulty) {
+            const question = {
+                type: 'multiple',
+                text: '',
+                options: [],
+                correct: 0
+            };
+
+            // Generate question based on the fact
+            if (fact.includes(' is ') || fact.includes(' are ')) {
+                const parts = fact.split(/ is | are /);
+                if (parts.length >= 2) {
+                    question.text = `What ${parts[0].toLowerCase()}?`;
+                    question.options = [parts[1].trim()];
+                }
+            } else if (fact.match(/\d+/)) {
+                const numbers = fact.match(/\d+/g);
+                const number = numbers[0];
+                question.text = fact.replace(number, 'how many').replace(/\.$/, '') + '?';
+                question.options = [number];
+            } else {
+                // Create a fill-in-the-blank style question
+                const words = fact.split(' ');
+                const keyWordIndex = Math.floor(words.length / 2);
+                const keyWord = words[keyWordIndex];
+                question.text = fact.replace(keyWord, '_____') + ' (Fill in the blank)';
+                question.options = [keyWord];
+            }
+
+            // Generate incorrect options
+            while (question.options.length < 4) {
+                const randomFact = allFacts[Math.floor(Math.random() * allFacts.length)];
+                const words = randomFact.split(' ');
+                const randomWord = words[Math.floor(Math.random() * words.length)];
+                
+                if (!question.options.includes(randomWord) && randomWord.length > 3) {
+                    question.options.push(randomWord);
+                }
+            }
+
+            // Shuffle options
+            question.options = question.options.sort(() => Math.random() - 0.5);
+            question.correct = question.options.indexOf(question.options.find(opt => 
+                fact.includes(opt) || opt === question.options[0]
+            ));
+
+            return question;
+        }
+
+        function generateTrueFalse(fact, difficulty) {
+            const question = {
+                type: 'trueFalse',
+                text: fact,
+                correct: true
+            };
+
+            // 50% chance to make it false
+            if (Math.random() < 0.5) {
+                // Modify the fact to make it false
+                const modifications = [
+                    (s) => s.replace(/is/g, 'is not'),
+                    (s) => s.replace(/are/g, 'are not'),
+                    (s) => s.replace(/can/g, 'cannot'),
+                    (s) => s.replace(/will/g, 'will not'),
+                    (s) => s.replace(/\d+/g, (match) => String(parseInt(match) + Math.floor(Math.random() * 10) + 1))
+                ];
+                
+                const mod = modifications[Math.floor(Math.random() * modifications.length)];
+                question.text = mod(fact);
+                question.correct = false;
+            }
+
+            return question;
+        }
+
+        function generateFillBlank(fact, difficulty) {
+            const words = fact.split(' ');
+            let blankIndex;
+            
+            // Choose word to blank based on difficulty
+            if (difficulty === 'easy') {
+                blankIndex = words.length - 2; // Blank near end
+            } else if (difficulty === 'hard') {
+                blankIndex = Math.floor(words.length / 3); // Blank near beginning
+            } else {
+                blankIndex = Math.floor(words.length / 2); // Blank in middle
+            }
+            
+            const answer = words[blankIndex];
+            words[blankIndex] = '_____';
+            
+            return {
+                type: 'fillBlank',
+                text: words.join(' '),
+                correct: answer.replace(/[.,!?]/g, '') // Remove punctuation
+            };
+        }
+
+        function generateQuiz() {
+            const textInput = document.getElementById('textInput').value.trim();
+            
+            if (!textInput) {
+                alert('Please enter some text to generate a quiz.');
+                return;
+            }
+
+            const numQuestions = parseInt(document.getElementById('numQuestions').value);
+            const difficulty = document.getElementById('difficulty').value;
+            const questionTypes = document.getElementById('questionTypes').value;
+            
+            // Show loading
+            document.getElementById('loadingDiv').style.display = 'block';
+            document.getElementById('generateBtn').disabled = true;
+            
+            // Extract key information
+            const keyFacts = extractKeyInformation(textInput);
+            
+            if (keyFacts.length === 0) {
+                alert('Could not extract enough information to create a quiz.');
+                document.getElementById('loadingDiv').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+                return;
+            }
+
+            // Generate questions
+            currentQuiz = [];
+            const availableTypes = questionTypes === 'all' 
+                ? ['multiple', 'trueFalse', 'fillBlank'] 
+                : [questionTypes];
+            
+            for (let i = 0; i < Math.min(numQuestions, keyFacts.length); i++) {
+                const fact = keyFacts[i % keyFacts.length];
+                const type = availableTypes[i % availableTypes.length];
+                
+                let question;
+                switch (type) {
+                    case 'multiple':
+                        question = generateMultipleChoice(fact, keyFacts, difficulty);
+                        break;
+                    case 'trueFalse':
+                        question = generateTrueFalse(fact, difficulty);
+                        break;
+                    case 'fillBlank':
+                        question = generateFillBlank(fact, difficulty);
+                        break;
+                }
+                
+                if (question) {
+                    currentQuiz.push(question);
+                }
+            }
+
+            // Display quiz
+            setTimeout(() => {
+                displayQuiz();
+                document.getElementById('loadingDiv').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+            }, 1000);
+        }
+
+        function displayQuiz() {
+            const container = document.getElementById('quizContainer');
+            container.innerHTML = '';
+            container.style.display = 'block';
+            
+            currentQuiz.forEach((question, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                
+                let questionHTML = `
+                    <div class="question-header">
+                        <span class="question-number">Question ${index + 1}</span>
+                        <span class="question-type">${
+                            question.type === 'multiple' ? 'Multiple Choice' :
+                            question.type === 'trueFalse' ? 'True/False' :
+                            'Fill in the Blank'
+                        }</span>
+                    </div>
+                    <div class="question-text">${question.text}</div>
+                `;
+                
+                if (question.type === 'multiple') {
+                    questionHTML += '<div class="options">';
+                    question.options.forEach((option, optIndex) => {
+                        questionHTML += `
+                            <label class="option">
+                                <input type="radio" name="q${index}" value="${optIndex}" 
+                                    onchange="selectAnswer(${index}, ${optIndex})">
+                                ${option}
+                            </label>
+                        `;
+                    });
+                    questionHTML += '</div>';
+                } else if (question.type === 'trueFalse') {
+                    questionHTML += `
+                        <div class="true-false-buttons">
+                            <div class="tf-button" onclick="selectTrueFalse(${index}, true)">True</div>
+                            <div class="tf-button" onclick="selectTrueFalse(${index}, false)">False</div>
+                        </div>
+                    `;
+                } else if (question.type === 'fillBlank') {
+                    questionHTML += `
+                        <input type="text" class="fill-blank-input" 
+                            placeholder="Enter your answer" 
+                            onchange="selectAnswer(${index}, this.value)">
+                    `;
+                }
+                
+                questionCard.innerHTML = questionHTML;
+                container.appendChild(questionCard);
+            });
+            
+            const submitButton = document.createElement('button');
+            submitButton.className = 'submit-quiz';
+            submitButton.textContent = 'Submit Quiz';
+            submitButton.onclick = submitQuiz;
+            container.appendChild(submitButton);
+        }
+
+        function selectAnswer(questionIndex, answer) {
+            userAnswers[questionIndex] = answer;
+        }
+
+        function selectTrueFalse(questionIndex, answer) {
+            userAnswers[questionIndex] = answer;
+            
+            // Update UI
+            const buttons = document.querySelectorAll(`.question-card:nth-child(${questionIndex + 1}) .tf-button`);
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            buttons[answer ? 0 : 1].classList.add('selected');
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            
+            currentQuiz.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                
+                if (question.type === 'multiple') {
+                    if (userAnswer === question.correct) {
+                        score++;
+                    }
+                } else if (question.type === 'trueFalse') {
+                    if (userAnswer === question.correct) {
+                        score++;
+                    }
+                } else if (question.type === 'fillBlank') {
+                    if (userAnswer && userAnswer.toLowerCase().trim() === question.correct.toLowerCase()) {
+                        score++;
+                    }
+                }
+            });
+            
+            showResults(score);
+        }
+
+        function showResults(score) {
+            const totalQuestions = currentQuiz.length;
+            const percentage = Math.round((score / totalQuestions) * 100);
+            
+            document.getElementById('scoreDisplay').textContent = `${score} / ${totalQuestions} (${percentage}%)`;
+            
+            const feedbackDiv = document.getElementById('feedbackDisplay');
+            if (percentage >= 80) {
+                feedbackDiv.className = 'feedback good';
+                feedbackDiv.textContent = 'Excellent work! You have a strong understanding of the material.';
+            } else if (percentage >= 60) {
+                feedbackDiv.className = 'feedback medium';
+                feedbackDiv.textContent = 'Good job! Review the material to strengthen your understanding.';
+            } else {
+                feedbackDiv.className = 'feedback poor';
+                feedbackDiv.textContent = 'Keep studying! Review the text and try again.';
+            }
+            
+            document.getElementById('resultsContainer').style.display = 'block';
+            document.getElementById('quizContainer').style.display = 'none';
+        }
+
+        function retryQuiz() {
+            userAnswers = {};
+            document.getElementById('resultsContainer').style.display = 'none';
+            displayQuiz();
+        }
+    </script>
+</body>
+</html>
