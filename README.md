@@ -13,7 +13,7 @@ An interactive web-based tool that automatically generates quizzes from any text
 
 ## Demo
 
-[Live Demo](https://YOUR_USERNAME.github.io/quiz-generator-from-text/)
+[Live Demo](https://keemanxp.github.io/quiz-generator-from-text/)
 
 ## How to Use
 
